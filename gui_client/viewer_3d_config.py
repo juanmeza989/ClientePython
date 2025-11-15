@@ -6,39 +6,39 @@ Ajusta estos valores para personalizar la visualización.
 
 # === CONFIGURACIÓN DE LA CÁMARA ===
 CAMERA_INITIAL_ROTATION = [45, -20]  # [horizontal, vertical] en grados
-CAMERA_INITIAL_DISTANCE = 25.0       # Distancia inicial de la cámara
-CAMERA_MIN_DISTANCE = 8.0            # Distancia mínima (zoom máximo)
-CAMERA_MAX_DISTANCE = 50.0           # Distancia máxima (zoom mínimo)
-CAMERA_ZOOM_SENSITIVITY = 1.0        # Sensibilidad del zoom con rueda del mouse
+CAMERA_INITIAL_DISTANCE = 600.0      # Distancia inicial más alejada para mejor vista
+CAMERA_MIN_DISTANCE = 300.0          # Distancia mínima (zoom máximo)
+CAMERA_MAX_DISTANCE = 1200.0         # Distancia máxima (zoom mínimo)
+CAMERA_ZOOM_SENSITIVITY = 8.0        # Sensibilidad del zoom aumentada
 CAMERA_ROTATION_SENSITIVITY = 0.5    # Sensibilidad de rotación con mouse
 
 # === DIMENSIONES DEL ROBOT ===
 # Dimensiones realistas para un brazo robótico industrial
-BASE_HEIGHT = 2.0          # Altura de la base - más robusta
-LOWER_ARM_LENGTH = 6.0     # Brazo inferior más largo para mejor alcance
-UPPER_ARM_LENGTH = 5.5     # Brazo superior proporcional
-EFFECTOR_LENGTH = 1.8      # Efector final más compacto
+BASE_HEIGHT = 60.0          # Altura de la base - más robusta
+LOWER_ARM_LENGTH = 120.0     # Brazo inferior más largo para mejor alcance
+UPPER_ARM_LENGTH = 120.0     # Brazo superior proporcional
+EFFECTOR_LENGTH = 18.0      # Efector final más compacto
 
 # Configuración adicional de geometría
-BASE_RADIUS = 2.5          # Radio de la base del robot
-JOINT_SIZE_FACTOR = 0.6    # Factor para el tamaño de las articulaciones
-ARM_THICKNESS_FACTOR = 0.3  # Factor para el grosor de los brazos
+BASE_RADIUS = 30.0          # Radio de la base del robot
+JOINT_SIZE_FACTOR = 2.0     # Factor para el tamaño de las articulaciones (más grandes)
+ARM_THICKNESS_FACTOR = 3.0  # Factor para el grosor de los brazos (mucho más gruesos)
 
 # === CONFIGURACIÓN DE ANIMACIÓN ===
-ANIMATION_SPEED = 2.0      # Velocidad de las animaciones (mayor = más rápido)
+ANIMATION_SPEED = 1.0      # Velocidad de las animaciones (mayor = más rápido)
 FPS_TARGET = 60           # Frames por segundo objetivo
 
 # === CONFIGURACIÓN VISUAL ===
 BACKGROUND_COLOR = (0.1, 0.1, 0.15, 1.0)  # Color de fondo (R, G, B, A)
 
-# Configuración de iluminación
-LIGHT_POSITION = (10.0, 15.0, 10.0, 1.0)  # Posición de la luz principal
-LIGHT_AMBIENT = (0.4, 0.4, 0.4, 1.0)      # Luz ambiente
-LIGHT_DIFFUSE = (0.8, 0.8, 0.8, 1.0)      # Luz difusa
-LIGHT_SPECULAR = (1.0, 1.0, 1.0, 1.0)     # Luz especular
+# Configuración de iluminación - ajustada para robot grande
+LIGHT_POSITION = (100.0, 200.0, 100.0, 1.0)  # Posición de la luz principal escalada
+LIGHT_AMBIENT = (0.5, 0.5, 0.5, 1.0)         # Luz ambiente aumentada
+LIGHT_DIFFUSE = (0.8, 0.8, 0.8, 1.0)         # Luz difusa
+LIGHT_SPECULAR = (1.0, 1.0, 1.0, 1.0)        # Luz especular
 
-# Campo de visión de la cámara
-FIELD_OF_VIEW = 60  # Grados
+# Campo de visión de la cámara - ajustado para mejor vista del robot grande
+FIELD_OF_VIEW = 50  # Grados (aumentado para ver mejor el robot)
 
 # === COLORES DEL ROBOT ===
 # Base del robot
@@ -57,37 +57,37 @@ EFFECTOR_INACTIVE_BODY = (0.5, 0.5, 0.0)  # Amarillo oscuro
 EFFECTOR_INACTIVE_TIP = (0.3, 0.3, 0.3)   # Gris
 
 # === CONFIGURACIÓN DEL ENTORNO ===
-# Cuadrícula del suelo
-GRID_SIZE = 20           # Tamaño de la cuadrícula
-GRID_SPACING = 1         # Espaciado entre líneas
+# Cuadrícula del suelo - ajustada para robot grande
+GRID_SIZE = 150              # Tamaño de la cuadrícula aumentado
+GRID_SPACING = 10            # Espaciado entre líneas aumentado
 GRID_COLOR = (0.4, 0.4, 0.4)           # Color líneas normales
 GRID_MAIN_COLOR = (0.6, 0.6, 0.6)     # Color líneas principales
 
-# Ejes de coordenadas con valores de referencia
-AXIS_LENGTH = 15         # Longitud extendida para mejor referencia
-AXIS_WIDTH = 3.0         # Grosor de las líneas de los ejes
+# Ejes de coordenadas con valores de referencia - escalados
+AXIS_LENGTH = 200            # Longitud extendida para robot grande
+AXIS_WIDTH = 3.0             # Grosor de las líneas de los ejes
 AXIS_X_COLOR = (1.0, 0.0, 0.0)  # Rojo
 AXIS_Y_COLOR = (0.0, 1.0, 0.0)  # Verde  
 AXIS_Z_COLOR = (0.0, 0.0, 1.0)  # Azul
 
-# Configuración de marcas de referencia
-AXIS_MARKS_INTERVAL = 2  # Intervalo entre marcas (cada 2 unidades)
-AXIS_MARKS_SIZE = 0.4    # Tamaño de las marcas
-AXIS_NUMBERS_INTERVAL = 5 # Intervalo para números de referencia
+# Configuración de marcas de referencia - escaladas
+AXIS_MARKS_INTERVAL = 20     # Intervalo entre marcas (cada 20 unidades)
+AXIS_MARKS_SIZE = 4.0        # Tamaño de las marcas aumentado
+AXIS_NUMBERS_INTERVAL = 50   # Intervalo para números de referencia
 
-# Indicador de posición objetivo
+# Indicador de posición objetivo - escalado
 TARGET_INDICATOR_COLOR = (0.0, 1.0, 1.0)  # Cian
-TARGET_INDICATOR_SIZE = 0.3                # Tamaño de la esfera
+TARGET_INDICATOR_SIZE = 3.0                # Tamaño de la esfera aumentado
 
 # === CONFIGURACIÓN AVANZADA ===
 # Calidad de renderizado (más segments = mejor calidad, menor rendimiento)
-CYLINDER_SEGMENTS = 16    # Segmentos de los cilindros del brazo
-SPHERE_SLICES = 8         # Segmentos horizontales de las esferas
-SPHERE_STACKS = 8         # Segmentos verticales de las esferas
+CYLINDER_SEGMENTS = 20       # Segmentos de los cilindros del brazo (mejor calidad)
+SPHERE_SLICES = 12           # Segmentos horizontales de las esferas
+SPHERE_STACKS = 12           # Segmentos verticales de las esferas
 
-# Configuración de viewport
-WINDOW_WIDTH = 800       # Ancho por defecto de la ventana
-WINDOW_HEIGHT = 500       # Alto por defecto de la ventana
+# Configuración de viewport - aumentada para mejor visualización
+WINDOW_WIDTH = 500         # Ancho por defecto de la ventana
+WINDOW_HEIGHT = 400         # Alto por defecto de la ventana
 
 # === POSICIÓN HOME ===
 # Calculada automáticamente basada en las dimensiones del brazo
@@ -119,4 +119,16 @@ CONSEJOS DE CONFIGURACIÓN:
 5. Para vista más cinematográfica:
    - Ajustar BACKGROUND_COLOR a negro: (0.0, 0.0, 0.0, 1.0)
    - Aumentar LIGHT_AMBIENT para más iluminación
+
+CONFIGURACIÓN ACTUAL:
+Esta configuración está optimizada para un robot industrial grande y bien visible:
+- Base: 60 unidades de altura, 30 de radio (más robusta y escalada)
+- Brazo inferior: 120 unidades de longitud, radio 10.5 (3.5 × 3.0)
+- Brazo superior: 120 unidades de longitud, radio 9 (3.0 × 3.0)  
+- Efector: 18 unidades, radio ~12 para buena visibilidad
+- Alcance total vertical: ~258 unidades
+- Cámara configurada para distancia 600 unidades (más alejada)
+- Grid de 150x150 unidades con espaciado de 10
+- Ejes de referencia cada 20 unidades, números cada 50
+- Factores de grosor: brazos ×3.0, articulaciones ×2.0
 """

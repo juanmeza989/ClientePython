@@ -23,15 +23,15 @@ except ImportError:
     CAMERA_ZOOM_SENSITIVITY = 1.0
     CAMERA_ROTATION_SENSITIVITY = 0.5
     
-    BASE_HEIGHT = 2.0
-    LOWER_ARM_LENGTH = 6.0
-    UPPER_ARM_LENGTH = 5.5
-    EFFECTOR_LENGTH = 1.8
-    BASE_RADIUS = 2.5
+    BASE_HEIGHT = 60.0
+    LOWER_ARM_LENGTH = 120.0
+    UPPER_ARM_LENGTH = 120.0
+    EFFECTOR_LENGTH = 18.0
+    BASE_RADIUS = 25.0
     JOINT_SIZE_FACTOR = 0.6
     ARM_THICKNESS_FACTOR = 0.3
     
-    ANIMATION_SPEED = 2.0
+    ANIMATION_SPEED = 1.0
     FPS_TARGET = 60
     
     BACKGROUND_COLOR = (0.1, 0.1, 0.15, 1.0)
@@ -116,6 +116,13 @@ class Robot3DViewer:
         # Posición home del robot - Ajustada para nueva orientación
         self.home_position = [0.0, self.lower_arm_length + self.upper_arm_length + self.effector_length, 0.0]
         
+        # Variables para ejecutar G-code
+        self.is_executing_gcode = False
+        self.gcode_queue = []
+        self.current_position = [0.0, self.lower_arm_length + self.upper_arm_length + self.effector_length, 0.0]
+        self.coordinate_mode = 'absolute'  # 'absolute' o 'relative'
+        self.gcode_execution_speed = 2.0  # Velocidad de ejecución (segundos por comando)
+        
     def start(self):
         """Inicia el visualizador 3D en un hilo separado."""
         if not self.running:
@@ -169,7 +176,143 @@ class Robot3DViewer:
             print("Advertencia: No se puede mover el robot a la posición home - los motores no están activados")
             return
             
-        self.update_position(*self.home_position)
+            self.update_position(*self.home_position)
+            
+    def execute_gcode(self, gcode_commands):
+        """
+        Ejecuta una secuencia de comandos G-code en el visualizador 3D.
+        
+        Args:
+            gcode_commands (list): Lista de comandos G-code como strings
+        """
+        if not self.motors_enabled:
+            print("Advertencia: No se puede ejecutar G-code - los motores no están activados")
+            return
+            
+        self.gcode_queue = gcode_commands.copy()
+        self.is_executing_gcode = True
+        self.coordinate_mode = 'absolute'  # Reset a modo absoluto
+        
+        # Iniciar ejecución en hilo separado
+        threading.Thread(target=self._execute_gcode_sequence, daemon=True).start()
+    
+    def _execute_gcode_sequence(self):
+        """Ejecuta la secuencia de G-code comando por comando."""
+        print(f"Iniciando ejecución de G-code con {len(self.gcode_queue)} comandos")
+        
+        for i, command in enumerate(self.gcode_queue):
+            if not self.is_executing_gcode or not self.motors_enabled:
+                break
+                
+            print(f"Ejecutando comando {i+1}/{len(self.gcode_queue)}: {command}")
+            self._execute_gcode_command(command.strip())
+            
+            # Pausa entre comandos
+            time.sleep(self.gcode_execution_speed)
+        
+        self.is_executing_gcode = False
+        print("Ejecución de G-code completada")
+    
+    def _execute_gcode_command(self, command):
+        """
+        Ejecuta un comando G-code individual.
+        
+        Args:
+            command (str): Comando G-code (ej: "G1 X100 Y50 Z100")
+        """
+        if not command or command.startswith(';'):
+            return  # Ignorar comentarios y líneas vacías
+            
+        # Parsear comando
+        parts = command.upper().split()
+        if not parts:
+            return
+            
+        main_command = parts[0]
+        
+        # Extraer parámetros
+        params = {}
+        for part in parts[1:]:
+            if len(part) >= 2:
+                letter = part[0]
+                try:
+                    value = float(part[1:])
+                    params[letter] = value
+                except ValueError:
+                    continue
+        
+        # Ejecutar según el tipo de comando
+        if main_command == 'G90':
+            self.coordinate_mode = 'absolute'
+            print("  -> Modo absoluto activado")
+            
+        elif main_command == 'G91':
+            self.coordinate_mode = 'relative'
+            print("  -> Modo relativo activado")
+            
+        elif main_command in ['G0', 'G1']:  # Movimientos
+            self._execute_movement(params)
+            
+        elif main_command == 'M3':
+            self.effector_active = True
+            print("  -> Efector activado")
+            
+        elif main_command == 'M5':
+            self.effector_active = False
+            print("  -> Efector desactivado")
+            
+        elif main_command == 'G24':  # Home (comando personalizado)
+            self._move_to_position(*self.home_position)
+            print("  -> Movimiento a posición home")
+            
+        else:
+            print(f"  -> Comando no reconocido: {main_command}")
+    
+    def _execute_movement(self, params):
+        """
+        Ejecuta un comando de movimiento G0/G1.
+        
+        Args:
+            params (dict): Diccionario con parámetros del comando (X, Y, Z, E)
+        """
+        # Obtener coordenadas del comando
+        x = params.get('X')
+        y = params.get('Y') 
+        z = params.get('Z')
+        speed = params.get('E', None)  # E se usa como velocidad en algunos sistemas
+        
+        if self.coordinate_mode == 'absolute':
+            # Modo absoluto: usar coordenadas directamente
+            new_x = x if x is not None else self.current_position[0]
+            new_y = y if y is not None else self.current_position[1]
+            new_z = z if z is not None else self.current_position[2]
+        else:
+            # Modo relativo: sumar a posición actual
+            new_x = self.current_position[0] + (x if x is not None else 0)
+            new_y = self.current_position[1] + (y if y is not None else 0)
+            new_z = self.current_position[2] + (z if z is not None else 0)
+        
+        # Ejecutar movimiento
+        self._move_to_position(new_x, new_y, new_z)
+        print(f"  -> Movimiento a ({new_x:.1f}, {new_y:.1f}, {new_z:.1f})")
+    
+    def _move_to_position(self, x, y, z):
+        """
+        Mueve el robot a la posición especificada y actualiza la posición actual.
+        
+        Args:
+            x, y, z (float): Coordenadas de destino
+        """
+        self.update_position(x, y, z, animate=True)
+        self.current_position = [x, y, z]
+        
+        # Esperar a que termine la animación
+        while self.animation_progress < 1.0:
+            time.sleep(0.1)
+    
+    def stop_gcode_execution(self):
+        """Detiene la ejecución de G-code."""
+        self.is_executing_gcode = False
         
     def _run_viewer(self):
         """Bucle principal del visualizador 3D."""
@@ -259,10 +402,10 @@ class Robot3DViewer:
         glLightfv(GL_LIGHT0, GL_DIFFUSE, LIGHT_DIFFUSE)
         glLightfv(GL_LIGHT0, GL_SPECULAR, LIGHT_SPECULAR)
         
-        # Configuración de perspectiva
+        # Configuración de perspectiva - ajustada para robot grande
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(FIELD_OF_VIEW, (self.width / self.height), 0.1, 100.0)
+        gluPerspective(FIELD_OF_VIEW, (self.width / self.height), 1.0, 2000.0)  # Plano lejano aumentado
         
         # Volver a matriz de modelo/vista
         glMatrixMode(GL_MODELVIEW)
@@ -276,11 +419,11 @@ class Robot3DViewer:
         
         # Posicionar cámara con rotación orbital centrada en el robot
         cam_x = self.camera_distance * math.cos(math.radians(self.camera_rotation[1])) * math.sin(math.radians(self.camera_rotation[0]))
-        cam_y = self.camera_distance * math.sin(math.radians(self.camera_rotation[1])) + 5.0  # Elevar ligeramente el punto de vista
+        cam_y = self.camera_distance * math.sin(math.radians(self.camera_rotation[1])) + 60.0  # Elevar punto de vista para robot grande
         cam_z = self.camera_distance * math.cos(math.radians(self.camera_rotation[1])) * math.cos(math.radians(self.camera_rotation[0]))
         
-        # Centrar la cámara en el punto medio del robot (altura media)
-        center_height = self.base_height + self.lower_arm_length / 2
+        # Centrar la cámara en el punto medio del robot (altura media ajustada)
+        center_height = self.base_height + (self.lower_arm_length + self.upper_arm_length) / 2
         gluLookAt(cam_x, cam_y, cam_z,          # posición de la cámara
                   0, center_height, 0,          # punto al que mira (centro del robot)
                   0, 1, 0)                      # vector up
@@ -292,32 +435,30 @@ class Robot3DViewer:
         
     def _render_ground(self):
         """Renderiza el plano del suelo en XZ (Y=0)."""
-        glColor3f(0.4, 0.4, 0.4)
+        glColor3f(*GRID_COLOR)
         glBegin(GL_LINES)
         
         # Líneas de cuadrícula en el plano XZ (Y=0)
-        grid_size = 20
-        grid_spacing = 1
-        for i in range(-grid_size, grid_size + 1, grid_spacing):
+        for i in range(-GRID_SIZE, GRID_SIZE + 1, GRID_SPACING):
             # Líneas paralelas al eje X (en plano XZ)
-            glVertex3f(i, 0.0, -grid_size)
-            glVertex3f(i, 0.0, grid_size)
+            glVertex3f(i, 0.0, -GRID_SIZE)
+            glVertex3f(i, 0.0, GRID_SIZE)
             # Líneas paralelas al eje Z (en plano XZ)
-            glVertex3f(-grid_size, 0.0, i)
-            glVertex3f(grid_size, 0.0, i)
+            glVertex3f(-GRID_SIZE, 0.0, i)
+            glVertex3f(GRID_SIZE, 0.0, i)
             
         glEnd()
         
         # Líneas principales más gruesas
         glLineWidth(2.0)
-        glColor3f(0.6, 0.6, 0.6)
+        glColor3f(*GRID_MAIN_COLOR)
         glBegin(GL_LINES)
         # Línea central X (en Y=0)
-        glVertex3f(-grid_size, 0.0, 0)
-        glVertex3f(grid_size, 0.0, 0)
+        glVertex3f(-GRID_SIZE, 0.0, 0)
+        glVertex3f(GRID_SIZE, 0.0, 0)
         # Línea central Z (en Y=0)
-        glVertex3f(0, 0.0, -grid_size)
-        glVertex3f(0, 0.0, grid_size)
+        glVertex3f(0, 0.0, -GRID_SIZE)
+        glVertex3f(0, 0.0, GRID_SIZE)
         glEnd()
         glLineWidth(1.0)
         
@@ -476,7 +617,9 @@ class Robot3DViewer:
         
         # Motor de la base
         base_motor_color = MOTORS_ON_LOWER_ARM if self.motors_enabled else MOTORS_OFF_LOWER_ARM
-        self._render_cylinder(0.0, 0.0, 0.0, 0.8, 0.6, base_motor_color)
+        base_motor_radius = 8.0 * JOINT_SIZE_FACTOR
+        base_motor_height = 6.0 * JOINT_SIZE_FACTOR
+        self._render_cylinder(0.0, 0.0, 0.0, base_motor_radius, base_motor_height, base_motor_color)
         
         # 3. BRAZO INFERIOR (lower arm) - Más detallado
         glTranslatef(0.0, 0.0, 0.6)
@@ -484,27 +627,34 @@ class Robot3DViewer:
         
         # Articulación del brazo inferior
         joint_color = (0.5, 0.5, 0.5)
-        self._render_cylinder(0.0, 0.0, 0.0, 0.4, 0.3, joint_color)
+        joint_radius = 4.0 * JOINT_SIZE_FACTOR  # Usar factor de configuración
+        self._render_cylinder(0.0, 0.0, 0.0, joint_radius, 3.0, joint_color)
         
         # Brazo inferior principal
         glTranslatef(0.0, 0.0, 0.3)
         lower_arm_color = MOTORS_ON_LOWER_ARM if self.motors_enabled else MOTORS_OFF_LOWER_ARM
-        self._render_arm_segment(self.lower_arm_length - 0.3, 0.35, lower_arm_color)
+        lower_arm_radius = 3.5 * ARM_THICKNESS_FACTOR  # Usar factor de configuración
+        self._render_arm_segment(self.lower_arm_length - 0.3, lower_arm_radius, lower_arm_color)
         
         # 4. ARTICULACIÓN INTERMEDIA (codo)
         glTranslatef(0.0, 0.0, self.lower_arm_length - 0.3)
-        self._render_joint(0.5, 0.4, joint_color)
+        elbow_radius = 5.0 * JOINT_SIZE_FACTOR
+        elbow_height = 4.0 * JOINT_SIZE_FACTOR
+        self._render_joint(elbow_radius, elbow_height, joint_color)
         
         # 5. BRAZO SUPERIOR (upper arm)
         glRotatef(angles['upper_arm'], 1, 0, 0)  # Ángulo brazo superior
         glTranslatef(0.0, 0.0, 0.4)
         
         upper_arm_color = MOTORS_ON_UPPER_ARM if self.motors_enabled else MOTORS_OFF_UPPER_ARM
-        self._render_arm_segment(self.upper_arm_length - 0.4, 0.3, upper_arm_color)
+        upper_arm_radius = 3.0 * ARM_THICKNESS_FACTOR  # Usar factor de configuración
+        self._render_arm_segment(self.upper_arm_length - 0.4, upper_arm_radius, upper_arm_color)
         
         # 6. ARTICULACIÓN DE MUÑECA
         glTranslatef(0.0, 0.0, self.upper_arm_length - 0.4)
-        self._render_joint(0.4, 0.3, joint_color)
+        wrist_radius = 4.0 * JOINT_SIZE_FACTOR
+        wrist_height = 3.0 * JOINT_SIZE_FACTOR
+        self._render_joint(wrist_radius, wrist_height, joint_color)
         
         # 7. EFECTOR FINAL - Más detallado
         glTranslatef(0.0, 0.0, 0.3)
@@ -521,31 +671,38 @@ class Robot3DViewer:
         """Renderiza una base robusta y realista para el robot."""
         # Base principal (plataforma circular más grande)
         base_platform_color = (0.2, 0.2, 0.2)
-        platform_radius = getattr(globals(), 'BASE_RADIUS', 2.5)
-        self._render_cylinder(0.0, 0.0, 0.0, platform_radius, 0.4, base_platform_color)
+        platform_radius = BASE_RADIUS  # Usar directamente la constante
+        base_height_scaled = 4.0 * JOINT_SIZE_FACTOR  # Altura escalada
+        self._render_cylinder(0.0, 0.0, 0.0, platform_radius, base_height_scaled, base_platform_color)
         
         # Anillo decorativo en la base
         ring_color = (0.3, 0.3, 0.3)
-        self._render_cylinder(0.0, 0.0, 0.35, platform_radius * 0.9, 0.1, ring_color)
+        ring_height_scaled = 1.0 * JOINT_SIZE_FACTOR
+        self._render_cylinder(0.0, 0.0, base_height_scaled * 0.85, platform_radius * 0.9, ring_height_scaled, ring_color)
         
         # Soporte central más robusto
         support_color = (0.35, 0.35, 0.35)
         support_radius = platform_radius * 0.4
-        self._render_cylinder(0.0, 0.0, 0.4, support_radius, self.base_height - 0.4, support_color)
+        support_height = self.base_height - base_height_scaled
+        self._render_cylinder(0.0, 0.0, base_height_scaled, support_radius, support_height, support_color)
         
         # Detalles de la base (pernos decorativos en círculo)
         bolt_color = (0.45, 0.45, 0.45)
         bolt_positions = 8  # 8 pernos alrededor
+        bolt_radius = 1.2 * JOINT_SIZE_FACTOR  # Pernos escalados
+        bolt_height = 3.0 * JOINT_SIZE_FACTOR  # Altura escalada
         for i in range(bolt_positions):
             angle = (2 * math.pi * i) / bolt_positions
             x = (platform_radius * 0.7) * math.cos(angle)
             y = (platform_radius * 0.7) * math.sin(angle)
-            self._render_cylinder(x, y, 0.05, 0.12, 0.3, bolt_color)
+            self._render_cylinder(x, y, 0.5, bolt_radius, bolt_height, bolt_color)
         
         # Placa superior de montaje
         mount_color = (0.4, 0.4, 0.4)
         mount_radius = support_radius * 1.1
-        self._render_cylinder(0.0, 0.0, self.base_height - 0.2, mount_radius, 0.2, mount_color)
+        mount_height = 2.0 * JOINT_SIZE_FACTOR  # Altura escalada
+        mount_z_position = self.base_height - mount_height
+        self._render_cylinder(0.0, 0.0, mount_z_position, mount_radius, mount_height, mount_color)
     
     def _render_arm_segment(self, length, base_radius, color):
         """Renderiza un segmento de brazo con geometría realista de brazo robótico."""
@@ -620,24 +777,28 @@ class Robot3DViewer:
         body_color = EFFECTOR_ACTIVE_BODY if active else EFFECTOR_INACTIVE_BODY
         tip_color = EFFECTOR_ACTIVE_TIP if active else EFFECTOR_INACTIVE_TIP
         
-        # Cuerpo base del efector (conector)
-        self._render_cylinder(0.0, 0.0, 0.0, 0.3, self.effector_length * 0.4, body_color)
+        # Cuerpo base del efector (conector) - más grande
+        effector_base_radius = 3.0 * ARM_THICKNESS_FACTOR
+        self._render_cylinder(0.0, 0.0, 0.0, effector_base_radius, self.effector_length * 0.4, body_color)
         
         # Cabeza principal del efector
         glPushMatrix()
         glTranslatef(0.0, 0.0, self.effector_length * 0.4)
         
-        # Cuerpo principal
-        self._render_cylinder(0.0, 0.0, 0.0, 0.35, self.effector_length * 0.4, body_color)
+        # Cuerpo principal - más grande
+        effector_body_radius = 3.5 * ARM_THICKNESS_FACTOR
+        self._render_cylinder(0.0, 0.0, 0.0, effector_body_radius, self.effector_length * 0.4, body_color)
         
-        # Plataforma de herramienta
+        # Plataforma de herramienta - más grande
         platform_color = (body_color[0] * 1.2, body_color[1] * 1.2, body_color[2] * 1.2)
-        self._render_cylinder(0.0, 0.0, self.effector_length * 0.35, 0.4, self.effector_length * 0.1, platform_color)
+        platform_radius = 4.0 * ARM_THICKNESS_FACTOR
+        self._render_cylinder(0.0, 0.0, self.effector_length * 0.35, platform_radius, self.effector_length * 0.1, platform_color)
         
-        # Indicador de estado central
+        # Indicador de estado central - más grande
         glTranslatef(0.0, 0.0, self.effector_length * 0.45)
         glColor3f(*tip_color)
-        self._render_sphere(0.15, SPHERE_SLICES, SPHERE_STACKS)
+        indicator_radius = 1.5 * ARM_THICKNESS_FACTOR
+        self._render_sphere(indicator_radius, SPHERE_SLICES, SPHERE_STACKS)
         
         # Sistema de garra/herramienta
         if active:
@@ -775,17 +936,17 @@ class Robot3DViewer:
         
         # Posicionar cámara nuevamente para el indicador
         cam_x = self.camera_distance * math.cos(math.radians(self.camera_rotation[1])) * math.sin(math.radians(self.camera_rotation[0]))
-        cam_y = self.camera_distance * math.sin(math.radians(self.camera_rotation[1])) + 5.0
+        cam_y = self.camera_distance * math.sin(math.radians(self.camera_rotation[1])) + 60.0  # Ajustado para robot grande
         cam_z = self.camera_distance * math.cos(math.radians(self.camera_rotation[1])) * math.cos(math.radians(self.camera_rotation[0]))
         
         # Centrar en el robot (altura media ajustada para nueva orientación)
-        center_height = (self.lower_arm_length + self.upper_arm_length) / 2
+        center_height = self.base_height + (self.lower_arm_length + self.upper_arm_length) / 2
         gluLookAt(cam_x, cam_y, cam_z, 0, center_height, 0, 0, 1, 0)
         
         # La posición objetivo también necesita transformación para la nueva orientación
         target_x, target_y, target_z = self.target_position
         glTranslatef(target_x, target_y, target_z)
-        self._render_sphere(0.3, 6, 6)
+        self._render_sphere(TARGET_INDICATOR_SIZE, SPHERE_SLICES, SPHERE_STACKS)  # Usar valores de configuración
         glPopMatrix()
         
     def _calculate_arm_angles(self, position):

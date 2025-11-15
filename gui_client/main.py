@@ -156,6 +156,7 @@ class RobotGUI(tk.Tk):
         taskbox.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=4, pady=4)
         ttk.Button(taskbox, text="Listar Tareas", command=self.rpc_list_tasks).pack(fill=tk.X, pady=2)
         ttk.Button(taskbox, text="Ejecutar Tarea", command=self.ui_execute_task).pack(fill=tk.X, pady=2)
+        ttk.Button(taskbox, text="Detener G-code", command=self.stop_gcode_execution).pack(fill=tk.X, pady=2)
         ttk.Button(taskbox, text="Aprender Inicio", command=self.ui_learning_start).pack(fill=tk.X, pady=2)
         ttk.Button(taskbox, text="Aprender Fin", command=self.ui_learning_end).pack(fill=tk.X, pady=2)
 
@@ -397,7 +398,70 @@ class RobotGUI(tk.Tk):
         tid = simpledialog.askstring("Ejecutar Tarea", "ID de tarea:")
         if not tid:
             return
+        
+        # Buscar la tarea en task.json para obtener el gcode
+        task_gcode = self.get_task_gcode(tid)
+        
+        # Ejecutar en el servidor
         threading.Thread(target=self._rpc_call, args=("executeTask", tid)).start()
+        
+        # Si encontramos el gcode y el visualizador 3D está activo, ejecutarlo también
+        if task_gcode and self.viewer_3d and hasattr(self.viewer_3d, 'running') and self.viewer_3d.running:
+            if self.motors_enabled:
+                self.append_log(f"Ejecutando G-code de la tarea '{tid}' en el visualizador 3D...")
+                self.viewer_3d.execute_gcode(task_gcode)
+            else:
+                self.append_log("Advertencia: No se puede ejecutar G-code en el visualizador 3D - los motores no están activados")
+    
+    def get_task_gcode(self, task_id):
+        """
+        Busca el G-code de una tarea en el archivo task.json.
+        
+        Args:
+            task_id (str): ID de la tarea
+            
+        Returns:
+            list: Lista de comandos G-code, o None si no se encuentra
+        """
+        try:
+            import json
+            tasks_file_path = os.path.join(os.path.dirname(__file__), 'task.json')
+            
+            if not os.path.exists(tasks_file_path):
+                self.append_log("Archivo task.json no encontrado. Ejecute 'Listar Tareas' primero.")
+                return None
+                
+            with open(tasks_file_path, 'r', encoding='utf-8') as f:
+                tasks = json.load(f)
+                
+            # Buscar la tarea con el ID especificado
+            for task in tasks:
+                if task.get('id') == task_id:
+                    gcode = task.get('gcode', [])
+                    if gcode:
+                        self.append_log(f"G-code encontrado para tarea '{task_id}': {len(gcode)} comandos")
+                        return gcode
+                    else:
+                        self.append_log(f"La tarea '{task_id}' no tiene G-code asociado")
+                        return None
+            
+            self.append_log(f"Tarea '{task_id}' no encontrada en task.json")
+            return None
+            
+        except Exception as e:
+            self.append_log(f"Error al leer task.json: {e}")
+            return None
+    
+    def stop_gcode_execution(self):
+        """Detiene la ejecución de G-code en el visualizador 3D."""
+        if self.viewer_3d and hasattr(self.viewer_3d, 'running') and self.viewer_3d.running:
+            if hasattr(self.viewer_3d, 'is_executing_gcode') and self.viewer_3d.is_executing_gcode:
+                self.viewer_3d.stop_gcode_execution()
+                self.append_log("Ejecución de G-code detenida")
+            else:
+                self.append_log("No hay ejecución de G-code en curso")
+        else:
+            self.append_log("El visualizador 3D no está activo")
 
     def ui_learning_start(self):
         if self.learning:
@@ -634,7 +698,17 @@ class RobotGUI(tk.Tk):
 
             elif method == 'executeTask':
                 if res is True:
-                    self.append_log('La tarea fue ejecutada')
+                    # Obtener el ID de la tarea desde args
+                    task_id = args[0] if args else "desconocida"
+                    self.append_log(f'La tarea "{task_id}" fue ejecutada en el servidor')
+                    
+                    # Verificar si también se ejecutó en el visualizador 3D
+                    if (self.viewer_3d and hasattr(self.viewer_3d, 'running') and self.viewer_3d.running and
+                        hasattr(self.viewer_3d, 'is_executing_gcode') and self.viewer_3d.is_executing_gcode):
+                        self.append_log(f'  -> Ejecutándose también en el visualizador 3D')
+                else:
+                    task_id = args[0] if args else "desconocida"
+                    self.append_log(f'Error al ejecutar la tarea "{task_id}"')
 
             elif method == 'listTasks':
                 if isinstance(res, list) and res:
@@ -646,6 +720,16 @@ class RobotGUI(tk.Tk):
                         self.append_log(f"ID: {task_id} - {task_name}")
                         self.append_log(f"  -> {task_desc}\n")
                     self.append_log("-------------------------\n")
+                    
+                    # Guardar las tareas en task.json
+                    try:
+                        import json
+                        tasks_file_path = os.path.join(os.path.dirname(__file__), 'task.json')
+                        with open(tasks_file_path, 'w', encoding='utf-8') as f:
+                            json.dump(res, f, indent=2, ensure_ascii=False)
+                        self.append_log(f"Tareas guardadas en: {tasks_file_path}")
+                    except Exception as e:
+                        self.append_log(f"Error al guardar tareas en task.json: {e}")
                 else:
                     self.append_log(f"No hay tareas disponibles o la respuesta es inválida: {res}")
 

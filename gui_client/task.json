@@ -1,0 +1,66 @@
+[
+  {
+    "description": "Dibuja un cuadrado de 50x50mm en el plano XY usando movimientos relativos.",
+    "gcode": [
+      "G90",
+      "G1 X100 Y100 Z100",
+      "G91",
+      "G1 Y30",
+      "G1 X30",
+      "G1 Y-30",
+      "G1 X-30",
+      "G90"
+    ],
+    "id": "draw_square",
+    "name": "Dibujar un Cuadrado"
+  },
+  {
+    "description": "Simula recoger un objeto en (100, 50) y dejarlo en (-80, 60).",
+    "gcode": [
+      "G90",
+      "G1 X100 Y50 Z50 E4000",
+      "G1 Z10 E1000",
+      "M3",
+      "G1 Z50 E1000",
+      "G1 X-80 Y60 Z50 E4000",
+      "G1 Z10 E1000",
+      "M5",
+      "G1 Z50 E1000",
+      "G24"
+    ],
+    "id": "pick_and_place",
+    "name": "Secuencia de Recoger y Soltar"
+  },
+  {
+    "description": "Realiza un movimiento corto en cada eje (X, Y, Z) para verificar su funcionamiento.",
+    "gcode": [
+      "G90",
+      "G1 X10 E3000",
+      "G1 X0 E3000",
+      "G1 Y10 E3000",
+      "G1 Y0 E3000",
+      "G1 Z10 E3000",
+      "G1 Z0 E3000"
+    ],
+    "id": "test_axes",
+    "name": "Prueba de Ejes"
+  },
+  {
+    "description": "Tarea aprendida por el usuario 1234",
+    "gcode": [
+      "G1 X100.0 Y100.0 Z100.0 E10.0",
+      "G1 X100.0 Y100.0 Z100.0 E10.0"
+    ],
+    "id": "new",
+    "name": "newnew"
+  },
+  {
+    "description": "Tarea aprendida por el usuario 1234",
+    "gcode": [
+      "G1 X100.0 Y100.0 Z100.0 E10.0",
+      "G1 X100.0 Y110.0 Z100.0 E10.0"
+    ],
+    "id": "aaa",
+    "name": "aaaaa"
+  }
+]
