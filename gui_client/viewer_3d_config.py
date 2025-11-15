@@ -89,12 +89,6 @@ SPHERE_STACKS = 12           # Segmentos verticales de las esferas
 WINDOW_WIDTH = 500         # Ancho por defecto de la ventana
 WINDOW_HEIGHT = 400         # Alto por defecto de la ventana
 
-# === POSICIÓN HOME ===
-# Calculada automáticamente basada en las dimensiones del brazo
-# HOME_X = 0.0
-# HOME_Y = UPPER_ARM_LENGTH + EFFECTOR_LENGTH  
-# HOME_Z = LOWER_ARM_LENGTH
-
 # === NOTAS DE CONFIGURACIÓN ===
 """
 CONSEJOS DE CONFIGURACIÓN:

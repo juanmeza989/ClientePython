@@ -102,15 +102,6 @@ class RobotRpcClient:
         username, password = self._credentials()
         return self.proxy.robot.disconnect(username, password)
 
-    def enable_remote(self) -> Dict[str, Any]:
-        # Este método no parece existir en el servidor actual
-        username, password = self._credentials()
-        return {"success": False, "message": "Método enableRemote no disponible"}
-
-    def disable_remote(self) -> Dict[str, Any]:
-        username, password = self._credentials()
-        return {"success": False, "message": "Método disableRemote no disponible"}
-
     def activate_motors(self) -> Dict[str, Any]:
         username, password = self._credentials()
         return self.proxy.robot.enableMotors(username, password)
@@ -138,11 +129,6 @@ class RobotRpcClient:
         username, password = self._credentials()
         return self.proxy.robot.setCoordinateMode(username, password, coord)
 
-    def home(self) -> Dict[str, Any]:
-        # El servidor no parece tener método home
-        username, password = self._credentials()
-        return {"success": False, "message": "Método home no disponible"}
-
     def move(self, target: Vector3, speed: Optional[float] = None) -> Dict[str, Any]:
         username, password = self._credentials()
         if speed is None:
@@ -153,19 +139,6 @@ class RobotRpcClient:
     def set_end_effector(self, active: bool) -> Dict[str, Any]:
         username, password = self._credentials()
         return self.proxy.robot.setEffector(username, password, bool(active))
-
-    # ------------- Aprendizaje manual a G-Code -------------
-    def learning_start(self, name: str) -> Dict[str, Any]:
-        username, password = self._credentials()
-        return {"success": False, "message": "Método learning no disponible en este servidor"}
-
-    def learning_add_step(self, target: Vector3, speed: float) -> Dict[str, Any]:
-        username, password = self._credentials()
-        return {"success": False, "message": "Método learning no disponible en este servidor"}
-
-    def learning_save(self) -> Dict[str, Any]:
-        username, password = self._credentials()
-        return {"success": False, "message": "Método learning no disponible en este servidor"}
 
     # ------------- Programas (subida y ejecución) -------------
     def upload_program(self, path: str, owner_user_id: str = "") -> Dict[str, Any]:

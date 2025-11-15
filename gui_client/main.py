@@ -6,13 +6,12 @@ Provides a login screen and role-based panels with buttons mapping to the CLI co
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-# Hide pygame welcome message
-import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
-import pygame as sa
-
 import sys
 import os
+
+# Hide pygame welcome message
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
+import pygame as sa
 
 # Ensure repository root is on sys.path so we can import client_api when
 # executing this file directly (python3 gui_client/main.py)
@@ -258,17 +257,6 @@ class RobotGUI(tk.Tk):
         else:
             self.viewer_3d.start()
             self.append_log("Visualizador 3D iniciado")
-            
-    def home_robot(self):
-        """Mueve el robot a la posición home tanto físicamente como en el visualizador."""
-        # Verificar que los motores estén habilitados antes de permitir movimiento
-        if not self.motors_enabled:
-            messagebox.showwarning("Advertencia", "No se puede mover el robot a home: los motores no están activados")
-            return
-            
-        threading.Thread(target=self._rpc_call, args=("moveDefaultSpeed", 0, 0, 0)).start()
-        if self.viewer_3d and hasattr(self.viewer_3d, 'running') and self.viewer_3d.running:
-            self.viewer_3d.home_robot()
             
     def update_3d_viewer_position(self, x, y, z):
         """Actualiza la posición en el visualizador 3D."""

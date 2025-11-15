@@ -62,5 +62,15 @@
     ],
     "id": "aaa",
     "name": "aaaaa"
+  },
+  {
+    "description": "Tarea aprendida por el usuario 1234",
+    "gcode": [
+      "G1 X50.0 Y50.0 Z50.0 E0",
+      "G1 X100.0 Y50.0 Z50.0 E0",
+      "G1 X100.0 Y120.0 Z60.0 E0"
+    ],
+    "id": "nuevaTarea",
+    "name": "nueva tarea"
   }
 ]

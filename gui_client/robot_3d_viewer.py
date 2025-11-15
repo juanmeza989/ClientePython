@@ -15,66 +15,8 @@ import time
 try:
     from viewer_3d_config import *
 except ImportError:
-    # Valores por defecto si no existe el archivo de configuración
-    CAMERA_INITIAL_ROTATION = [45, -20]
-    CAMERA_INITIAL_DISTANCE = 30.0
-    CAMERA_MIN_DISTANCE = 10.0
-    CAMERA_MAX_DISTANCE = 60.0
-    CAMERA_ZOOM_SENSITIVITY = 1.0
-    CAMERA_ROTATION_SENSITIVITY = 0.5
-    
-    BASE_HEIGHT = 60.0
-    LOWER_ARM_LENGTH = 120.0
-    UPPER_ARM_LENGTH = 120.0
-    EFFECTOR_LENGTH = 18.0
-    BASE_RADIUS = 25.0
-    JOINT_SIZE_FACTOR = 0.6
-    ARM_THICKNESS_FACTOR = 0.3
-    
-    ANIMATION_SPEED = 1.0
-    FPS_TARGET = 60
-    
-    BACKGROUND_COLOR = (0.1, 0.1, 0.15, 1.0)
-    LIGHT_POSITION = (10.0, 15.0, 10.0, 1.0)
-    LIGHT_AMBIENT = (0.4, 0.4, 0.4, 1.0)
-    LIGHT_DIFFUSE = (0.8, 0.8, 0.8, 1.0)
-    LIGHT_SPECULAR = (1.0, 1.0, 1.0, 1.0)
-    FIELD_OF_VIEW = 60
-    
-    BASE_COLOR = (0.3, 0.3, 0.3)
-    MOTORS_ON_LOWER_ARM = (0.8, 0.2, 0.2)
-    MOTORS_ON_UPPER_ARM = (0.2, 0.8, 0.2)
-    MOTORS_OFF_LOWER_ARM = (0.4, 0.1, 0.1)
-    MOTORS_OFF_UPPER_ARM = (0.1, 0.4, 0.1)
-    
-    EFFECTOR_ACTIVE_BODY = (1.0, 1.0, 0.0)
-    EFFECTOR_ACTIVE_TIP = (1.0, 0.0, 0.0)
-    EFFECTOR_INACTIVE_BODY = (0.5, 0.5, 0.0)
-    EFFECTOR_INACTIVE_TIP = (0.3, 0.3, 0.3)
-    
-    GRID_SIZE = 20
-    GRID_SPACING = 1
-    GRID_COLOR = (0.4, 0.4, 0.4)
-    GRID_MAIN_COLOR = (0.6, 0.6, 0.6)
-    
-    AXIS_LENGTH = 15
-    AXIS_WIDTH = 3.0
-    AXIS_X_COLOR = (1.0, 0.0, 0.0)
-    AXIS_Y_COLOR = (0.0, 1.0, 0.0)
-    AXIS_Z_COLOR = (0.0, 0.0, 1.0)
-    AXIS_MARKS_INTERVAL = 2
-    AXIS_MARKS_SIZE = 0.4
-    AXIS_NUMBERS_INTERVAL = 5
-    
-    TARGET_INDICATOR_COLOR = (0.0, 1.0, 1.0)
-    TARGET_INDICATOR_SIZE = 0.3
-    
-    CYLINDER_SEGMENTS = 20
-    SPHERE_SLICES = 12
-    SPHERE_STACKS = 12
-    
-    WINDOW_WIDTH = 1200
-    WINDOW_HEIGHT = 800
+    # Error: archivo de configuración requerido
+    raise ImportError("El archivo viewer_3d_config.py es requerido para el funcionamiento del visualizador 3D")
 
 class Robot3DViewer:
     def __init__(self, width=WINDOW_WIDTH, height=WINDOW_HEIGHT):
@@ -850,9 +792,6 @@ class Robot3DViewer:
         glTranslatef(0.0, 0.0, 0.4)
         self._render_sphere(0.18, 8, 8)
         
-    # Remover funciones obsoletas que ya no se usan
-    # _render_axis_numbers y _render_number_markers han sido reemplazadas
-        
     def _render_cylinder(self, x, y, z, radius, height, color):
         """Renderiza un cilindro en la posición especificada."""
         glColor3f(*color)
@@ -887,23 +826,6 @@ class Robot3DViewer:
             glVertex3f(radius * math.cos(angle), radius * math.sin(angle), height)
         glEnd()
         
-        glPopMatrix()
-        
-    def _render_effector(self, active):
-        """Renderiza el efector final."""
-        body_color = EFFECTOR_ACTIVE_BODY if active else EFFECTOR_INACTIVE_BODY
-        tip_color = EFFECTOR_ACTIVE_TIP if active else EFFECTOR_INACTIVE_TIP
-        
-        # Cuerpo del efector
-        self._render_cylinder(0.0, 0.0, 0.0, 0.2, self.effector_length, body_color)
-        
-        # Indicador de estado (esfera)
-        glPushMatrix()
-        glTranslatef(0.0, 0.0, self.effector_length)
-        glColor3f(*tip_color)
-            
-        # Renderizar esfera simple
-        self._render_sphere(0.3, SPHERE_SLICES, SPHERE_STACKS)
         glPopMatrix()
         
     def _render_sphere(self, radius, slices, stacks):
@@ -1011,30 +933,3 @@ class Robot3DViewer:
     def _smooth_step(self, t):
         """Función de suavizado para animaciones."""
         return t * t * (3.0 - 2.0 * t)
-
-
-if __name__ == "__main__":
-    # Test del visualizador 3D
-    viewer = Robot3DViewer()
-    viewer.start()
-    
-    # Simular algunos movimientos
-    time.sleep(2)
-    viewer.set_robot_state(motors_enabled=True)
-    viewer.update_position(5, 8, 5)
-    
-    time.sleep(3)
-    viewer.update_position(-3, 10, 8)
-    
-    time.sleep(3)
-    viewer.set_robot_state(effector_active=True)
-    
-    time.sleep(3)
-    viewer.home_robot()
-    
-    # Mantener la ventana abierta
-    try:
-        while viewer.running:
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        viewer.stop()
