@@ -86,8 +86,8 @@ SPHERE_SLICES = 8         # Segmentos horizontales de las esferas
 SPHERE_STACKS = 8         # Segmentos verticales de las esferas
 
 # Configuración de viewport
-WINDOW_WIDTH = 1000       # Ancho por defecto de la ventana
-WINDOW_HEIGHT = 700       # Alto por defecto de la ventana
+WINDOW_WIDTH = 800       # Ancho por defecto de la ventana
+WINDOW_HEIGHT = 500       # Alto por defecto de la ventana
 
 # === POSICIÓN HOME ===
 # Calculada automáticamente basada en las dimensiones del brazo

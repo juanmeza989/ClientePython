@@ -34,7 +34,7 @@ class RobotGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Robot Client GUI")
-        self.geometry("1500x800")
+        self.geometry("1500x900")
         self.client = RobotRpcClient()
         self.user = None
         self.password = None
@@ -128,18 +128,8 @@ class RobotGUI(tk.Tk):
         ttk.Button(controls, text="Modo Relativo", command=lambda: self.rpc_set_coord(False)).pack(fill=tk.X, pady=2)
         ttk.Button(controls, text="Estado", command=self.rpc_get_status).pack(fill=tk.X, pady=2)
         ttk.Button(controls, text="Ayuda", command=self.rpc_help).pack(fill=tk.X, pady=2)
-        
-        # Separador y sección del visualizador 3D
-        ttk.Separator(controls, orient='horizontal').pack(fill='x', pady=10, padx=5)
-        ttk.Label(controls, text="Visualizador 3D", font=("", 10)).pack(pady=(0, 5), anchor='w', padx=5)
-        
-        if VIEWER_3D_AVAILABLE:
-            ttk.Button(controls, text="Abrir Visualizador 3D", command=self.toggle_3d_viewer).pack(fill=tk.X, pady=2)
-            ttk.Button(controls, text="Home (Posición Inicial)", command=self.home_robot).pack(fill=tk.X, pady=2)
-        else:
-            ttk.Label(controls, text="Visualizador 3D no disponible", foreground="red").pack(fill=tk.X, pady=2)
 
-        reportsOrTables = ttk.LabelFrame(body, text="Reportes y Usuarios")
+        reportsOrTables = ttk.LabelFrame(body, text="Reportes, Usuarios y Visualizador 3D")
         reportsOrTables.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=4, pady=4)
         ttk.Label(reportsOrTables, text="Reportes", font=("", 10)).pack(pady=(0, 5), anchor='w', padx=5)
         ttk.Button(reportsOrTables, text="Reporte", command=self.rpc_report).pack(fill=tk.X, pady=2)
@@ -150,6 +140,16 @@ class RobotGUI(tk.Tk):
         ttk.Label(reportsOrTables, text="Usuarios", font=("", 10)).pack(pady=(0, 5), anchor='w', padx=5)
         ttk.Button(reportsOrTables, text="Agregar Usuario", command=self.rpc_add_user).pack(fill=tk.X, pady=2)
         ttk.Button(reportsOrTables, text="Usuarios Conectados", command=self.rpc_connected_users).pack(fill=tk.X, pady=2)
+        
+        # Separador y sección del visualizador 3D
+        ttk.Separator(reportsOrTables, orient='horizontal').pack(fill='x', pady=10, padx=5)
+        ttk.Label(reportsOrTables, text="Visualizador 3D", font=("", 10)).pack(pady=(0, 5), anchor='w', padx=5)
+        
+        if VIEWER_3D_AVAILABLE:
+            ttk.Button(reportsOrTables, text="Abrir Visualizador 3D", command=self.toggle_3d_viewer).pack(fill=tk.X, pady=2)
+        
+        else:
+            ttk.Label(reportsOrTables, text="Visualizador 3D no disponible", foreground="red").pack(fill=tk.X, pady=2)
 
 
         taskbox = ttk.LabelFrame(body, text="Tareas")
@@ -176,7 +176,7 @@ class RobotGUI(tk.Tk):
         ttk.Button(movebox, text="Mover", command=self.ui_move).pack(side=tk.LEFT, padx=6)
 
         # log area
-        self.log = tk.Text(self, height=25)
+        self.log = tk.Text(self, height=35)
         self.log.pack(side=tk.BOTTOM, fill=tk.X)
 
     def logout(self):
