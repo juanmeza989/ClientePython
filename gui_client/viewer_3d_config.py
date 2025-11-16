@@ -86,8 +86,8 @@ SPHERE_SLICES = 12           # Segmentos horizontales de las esferas
 SPHERE_STACKS = 12           # Segmentos verticales de las esferas
 
 # Configuración de viewport - aumentada para mejor visualización
-WINDOW_WIDTH = 500         # Ancho por defecto de la ventana
-WINDOW_HEIGHT = 400         # Alto por defecto de la ventana
+WINDOW_WIDTH = 800         # Ancho por defecto de la ventana
+WINDOW_HEIGHT = 600         # Alto por defecto de la ventana
 
 # === NOTAS DE CONFIGURACIÓN ===
 """
